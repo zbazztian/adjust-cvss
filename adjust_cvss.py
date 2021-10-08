@@ -30,7 +30,7 @@ def parse_pattern(line):
         else:
             rule_pattern = rule_pattern + c
 
-    return rule_pattern, float(score_pattern)
+    return rule_pattern, str(float(score_pattern))
 
 
 def adjust_cvss(args):
