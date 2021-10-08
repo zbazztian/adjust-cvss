@@ -2,7 +2,7 @@ name: 'Adjust  CVSS'
 description: 'Adjust the CVSS scores of CodeQL queries'
 inputs:
   patterns:
-    description: 'Patterns for the id\'s of the queries whose security-severity property should be adjusted.'
+    description: 'Score patterns'
     required: true
   input:
     description: 'Path to the input SARIF file'
