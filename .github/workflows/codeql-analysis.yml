@@ -50,25 +50,24 @@ jobs:
       uses: github/codeql-action/analyze@v1
       with:
         output: sarif-results
-#        upload: False
+        upload: False
 
-#    - name: adjust-cvss
-#      uses: zbazztian/adjust-cvss@master
-#      with:
-#        patterns: |
-#          java/*:9.99
-#          */sql-injection:1.23
-#        input: sarif-results/${{ matrix.language }}.sarif
-#        output: sarif-results/${{ matrix.language }}.sarif
+    - name: adjust-cvss
+      uses: zbazztian/adjust-cvss@master
+      with:
+        patterns: |
+          **:9.99
+        input: sarif-results/${{ matrix.language }}.sarif
+        output: sarif-results/${{ matrix.language }}.sarif
 
-#    - name: Upload SARIF
-#      uses: github/codeql-action/upload-sarif@v1
-#      with:
-#        sarif_file: sarif-results/${{ matrix.language }}.sarif
+    - name: Upload SARIF
+      uses: github/codeql-action/upload-sarif@v1
+      with:
+        sarif_file: sarif-results/${{ matrix.language }}.sarif
 
-#    - name: Upload loc as a Build Artifact
-#      uses: actions/upload-artifact@v2.2.0
-#      with:
-#        name: sarif-results
-#        path: sarif-results
-#        retention-days: 1
+    - name: Upload loc as a Build Artifact
+      uses: actions/upload-artifact@v2.2.0
+      with:
+        name: sarif-results
+        path: sarif-results
+        retention-days: 1
