@@ -56,7 +56,7 @@ jobs:
       uses: zbazztian/adjust-cvss@master
       with:
         patterns: |
-          **:1.2
+          **:9.2
         input: sarif-results/${{ matrix.language }}.sarif
         output: sarif-results/${{ matrix.language }}.sarif
 
