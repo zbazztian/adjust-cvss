@@ -1,0 +1,20 @@
+name: 'Adjust  CVSS'
+description: 'Adjust the CVSS scores of CodeQL queries'
+inputs:
+  patterns:
+    description: 'Patterns for the id\'s of the queries whose security-severity property should be adjusted.'
+    required: true
+  input:
+    description: 'Path to the input SARIF file'
+    required: true
+  output:
+    description: 'Path to the output SARIF file'
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: adjust
+      run: |
+        unset LD_PRELOAD
+        python3 "${{ github.action_path }}/adjust_cvss.py" --input "${{ inputs.input }}" --output "${{ inputs.output }}" --split-lines -- "${{ inputs.patterns }}"
+      shell: bash
