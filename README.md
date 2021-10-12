@@ -1,21 +1,28 @@
-# filter-sarif
+# adjust-cvss
 
-Takes a SARIF file and a list of inclusion and exclusion patterns as input and removes alerts from the SARIF file according to those patterns.
+Takes a SARIF file and a list of query id patterns as input and assigns custom [cvss scores](https://github.blog/changelog/2021-07-19-codeql-code-scanning-new-severity-levels-for-security-alerts/) (aka `security-severity`) to those queries. This allows to make specific queries less or more severe, which affects how they are displayed (`Low`, `High`, `Critical`, ...) and whether they cause pull request checks to fail.
 
 # Example
 
-The following example removes all alerts from all Java test files:
+The following example sets the cvss score of all queries to `1.2` except for the query with the id `java/xss`. Note that this only affects queries with a `security-severity` metadata field. Therefore, most code quality related queries are not affected:
 
 ```yaml
-name: "Filter SARIF"
+name: "CodeQL"
+
 on:
   push:
-    branches: [master]
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
 
 jobs:
   analyze:
     name: Analyze
     runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
 
     strategy:
       fail-fast: false
@@ -30,60 +37,44 @@ jobs:
       uses: github/codeql-action/init@v1
       with:
         languages: ${{ matrix.language }}
+        queries: security-and-quality
 
-    - name: Autobuild
-      uses: github/codeql-action/autobuild@v1
+    - run: |
+        javatest/build
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v1
       with:
-        upload: False
         output: sarif-results
+        upload: False
 
-    - name: filter-sarif
-      uses: zbazztian/filter-sarif@master
+    - name: adjust-cvss
+      uses: zbazztian/adjust-cvss@master
       with:
         patterns: |
-          +**/*.java
-          -**/*Test*.java
-        input: sarif-results/java-builtin.sarif
-        output: sarif-results/java-builtin.sarif
+          **:1.2
+          java/xss:9.9
+        input: sarif-results/${{ matrix.language }}.sarif
+        output: sarif-results/${{ matrix.language }}.sarif
 
     - name: Upload SARIF
       uses: github/codeql-action/upload-sarif@v1
       with:
-        sarif_file: sarif-results/java-builtin.sarif
-
-    - name: Upload loc as a Build Artifact
-      uses: actions/upload-artifact@v2.2.0
-      with:
-        name: sarif-results
-        path: sarif-results
-        retention-days: 1
+        sarif_file: sarif-results/${{ matrix.language }}.sarif
 ```
 
-Note how we provided `upload: False` and `output: sarif-results` to the `analyze` action. That way we can filter the SARIF with the `filter-sarif` action before uploading it via `upload-sarif`. Finally, we also attach the resulting SARIF file to the build, which is convenient for later inspection.
+Note how we provided `upload: False` and `output: sarif-results` to the `analyze` action. That way we can filter the SARIF with the `adjust-cvss` action before uploading it via `upload-sarif`.
 
 # Patterns
 
 Each pattern line is of the form:
 ```
-[+/-]<file pattern>[:<rule pattern>]
+<id pattern>:<score pattern>
 ```
 
 for example:
 ```
--**/*Test*.java:**               # exclusion pattern: remove all alerts from all Java test files
--**/*Test*.java                  # ditto, short form of the line above
-+**/*.java:java/sql-injection    # inclusion pattern: This line has precedence over the first two
-                                 # and thus "whitelists" alerts of type "java/sql-injection"
-**/*.java:java/sql-injection     # ditto, the "+" in inclusion patterns is optional
-**                               # allow all alerts in all files (reverses all previous lines)
+**:1.2                           # all queries shall have a cvss of `1.2`.
+java/xss:9.9                     # the Java XSS query should have a score of `9.9`
+java/**:5.4                      # all Java queries have a score of `5.4`
 ```
-
-* The path separator character in patterns is always `/`, independent of the platform the code is running on and independent of the paths in the SARIF file.
-* `*` matches any character, except a path separator
-* `**` matches any character and is only allowed between path separators, e.g. `/**/file.txt`, `**/file.txt` or `**`. NOT allowed: `**.txt`, `/etc**`
-* The rule pattern is optional. If omitted, it will apply to alerts of all types.
-* Subsequent lines override earlier ones. By default all alerts are included.
-* If you need to use the literals `+`, `-`, `\` or `:` in your pattern, you can escape them with `\`, e.g. `\-this/is/an/inclusion/file/pattern\:with-a-semicolon:and/a/rule/pattern/with/a/\\/backslash`. For `+` and `-`, this is only necessary if they appear at the beginning of the pattern line.
