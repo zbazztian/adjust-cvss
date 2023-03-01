@@ -45,7 +45,7 @@ jobs:
         output: sarif-results
 
     - name: adjust-cvss
-      uses: zbazztian/adjust-cvss@master
+      uses: advanced-security/adjust-cvss@master
       with:
         #patterns: |
         #  -**/*.java
