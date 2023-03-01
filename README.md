@@ -1,3 +1,8 @@
+### THIS REPOSITORY WAS RETIRED!
+
+Please use https://github.com/advanced-security/adjust-cvss going forward.
+
+
 # adjust-cvss
 
 Takes a SARIF file and a list of query id patterns as input and assigns custom [cvss scores](https://github.blog/changelog/2021-07-19-codeql-code-scanning-new-severity-levels-for-security-alerts/) (aka `security-severity`) to those queries. This allows to make specific queries less or more severe, which affects how they are displayed (`Low`, `High`, `Critical`, ...) and whether they cause pull request checks to fail.
